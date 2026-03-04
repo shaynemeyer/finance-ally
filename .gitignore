@@ -208,4 +208,16 @@ __marimo__/
 
 .DS_Store
 
+
+# NextJS
 node_modules/
+
+.next/
+frontend/.next/
+frontend/node_modules/
+frontend/.env.local
+frontend/out/
+
+*.db 
+db/finance-ally.db
+.env.local
