@@ -87,7 +87,7 @@ Single Container, Single Port
 finance-ally/
 ├── frontend/                 # Next.js TypeScript project (static export)
 ├── backend/                  # FastAPI uv project (Python)
-│   └── model/                # SQLModel definitions, seed data, initialization logic
+│   └── models/               # SQLModel definitions (one file per model), seed data, initialization logic
 ├── planning/                 # Project-wide documentation for agents
 │   ├── PLAN.md               # This document
 │   └── ...                   # Additional agent reference docs
@@ -109,7 +109,7 @@ finance-ally/
 
 - **frontend/** is a self-contained Next.js project. It knows nothing about Python. It talks to the backend via `/api/*` endpoints and /api/stream/\* SSE endpoints. Internal structure is up to the Frontend Engineer agent.
 - **backend/** is a self-contained uv project with its own `pyproject.toml`. It owns all server logic including database initialization, schema, seed data, API routes, SSE streaming, market data, and LLM integration. Internal structure is up to the Backend/Market Data agents.
-- **backend/model/** contains schema SQL definitions and seed logic. The backend lazily initializes the database on first request — creating tables and seeding default data if the SQLite file doesn't exist or is empty.
+- **backend/models/** contains one file per SQLModel table class plus `seed.py`. The backend initializes the database on startup via FastAPI lifespan — creating tables and seeding default data if the SQLite file doesn't exist or is empty.
 - **db/** at the top level is the runtime volume mount point. The SQLite file (db/finance-ally.db) is created here by the backend and persists across container restarts via Docker volume.
 - **planning/** contains project-wide documentation, including this plan. All agents reference files here as the shared contract.
 - **test/** contains Playwright E2E tests and supporting infrastructure (e.g., docker-compose.test.yml). Unit tests live within frontend/ and backend/ respectively, following each framework's conventions.
