@@ -1,5 +1,6 @@
 from sqlmodel import Session, select
-from model.models import UserProfile, Watchlist
+from models.user_profile import UserProfile
+from models.watchlist import Watchlist
 
 DEFAULT_TICKERS = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "JPM", "V", "NFLX"]
 

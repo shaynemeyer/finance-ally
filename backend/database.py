@@ -6,10 +6,10 @@ engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 def init_db() -> None:
     """Create all tables and seed default data."""
-    from model.models import (  # noqa: F401 — imported for SQLModel metadata
+    from models import (  # noqa: F401 — imported to register SQLModel metadata
         UserProfile, Watchlist, Position, Trade, PortfolioSnapshot, ChatMessage
     )
-    from model.seed import seed_data
+    from models.seed import seed_data
 
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
