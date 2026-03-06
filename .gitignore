@@ -211,6 +211,7 @@ __marimo__/
 
 # NextJS
 node_modules/
+!frontend/src/lib/
 
 .next/
 frontend/.next/
