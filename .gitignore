@@ -221,4 +221,6 @@ frontend/out/
 
 *.db 
 db/finance-ally.db
+db/finance-ally.db-shm
+db/finance-ally.db-wal
 .env.local
