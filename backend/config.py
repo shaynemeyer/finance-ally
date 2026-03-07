@@ -10,4 +10,5 @@ DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{_db_file}")
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 MASSIVE_API_KEY = os.getenv("MASSIVE_API_KEY", "")
+MASSIVE_POLL_INTERVAL = float(os.getenv("MASSIVE_POLL_INTERVAL", "15.0"))
 LLM_MOCK = os.getenv("LLM_MOCK", "false").lower() == "true"
