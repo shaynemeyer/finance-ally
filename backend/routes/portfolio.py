@@ -15,6 +15,8 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+# Request schema for trade endpoint — Pydantic BaseModel, not a DB table.
+# Lives here rather than models/ because models/ is reserved for SQLModel table classes.
 class TradeRequest(BaseModel):
     ticker: str
     quantity: float
