@@ -9,7 +9,7 @@ from sqlmodel import Session, select
 from database import init_db, engine
 from market.factory import create_provider
 from models import Watchlist
-from routes import health, portfolio, stream, watchlist
+from routes import chat, health, portfolio, stream, watchlist
 from tasks import snapshot_loop
 
 
@@ -43,6 +43,7 @@ app.include_router(health.router)
 app.include_router(stream.router)
 app.include_router(watchlist.router)
 app.include_router(portfolio.router)
+app.include_router(chat.router)
 
 _static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.isdir(_static_dir):
