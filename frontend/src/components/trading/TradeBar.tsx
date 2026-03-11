@@ -24,24 +24,28 @@ export function TradeBar() {
     setLastTrade(null);
     setIsSubmitting(true);
 
-    const res = await fetch("/api/portfolio/trade", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ticker: t, quantity: qty, side }),
-    });
+    try {
+      const res = await fetch("/api/portfolio/trade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker: t, quantity: qty, side }),
+      });
 
-    setIsSubmitting(false);
-
-    if (res.ok) {
-      const data = await res.json();
-      const total = (data.price * data.quantity).toFixed(2);
-      setLastTrade(`${side === "buy" ? "Bought" : "Sold"} ${qty} ${t} @ $${data.price.toFixed(2)} = $${total}`);
-      setTicker("");
-      setQuantity("");
-      await Promise.all([fetchPortfolio(), fetchHistory()]);
-    } else {
-      const body = await res.json().catch(() => ({}));
-      setError(body.detail ?? "Trade failed");
+      if (res.ok) {
+        const data = await res.json();
+        const total = (data.price * data.quantity).toFixed(2);
+        setLastTrade(`${side === "buy" ? "Bought" : "Sold"} ${qty} ${t} @ $${data.price.toFixed(2)} = $${total}`);
+        setTicker("");
+        setQuantity("");
+        await Promise.all([fetchPortfolio(), fetchHistory()]);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setError(body.detail ?? "Trade failed");
+      }
+    } catch {
+      setError("Trade failed");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

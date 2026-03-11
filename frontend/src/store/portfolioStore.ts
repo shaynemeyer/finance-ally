@@ -16,14 +16,18 @@ export const usePortfolioStore = create<PortfolioState>((set) => ({
   fetchPortfolio: async () => {
     const res = await fetch("/api/portfolio");
     if (!res.ok) return;
-    const data = PortfolioSchema.parse(await res.json());
-    set({ portfolio: data });
+    try {
+      const data = PortfolioSchema.parse(await res.json());
+      set({ portfolio: data });
+    } catch {}
   },
 
   fetchHistory: async () => {
     const res = await fetch("/api/portfolio/history");
     if (!res.ok) return;
-    const data = z.array(SnapshotSchema).parse(await res.json());
-    set({ history: data });
+    try {
+      const data = z.array(SnapshotSchema).parse(await res.json());
+      set({ history: data });
+    } catch {}
   },
 }));

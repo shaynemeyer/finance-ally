@@ -12,7 +12,7 @@ import { usePortfolioStore } from "@/store/portfolioStore";
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
 }
 
 function formatValue(v: number): string {
@@ -36,8 +36,8 @@ export function PLChart() {
   }));
 
   const values = data.map((d) => d.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const min = values.reduce((a, b) => (b < a ? b : a), values[0]);
+  const max = values.reduce((a, b) => (b > a ? b : a), values[0]);
   const pad = (max - min) * 0.1 || 100;
   const baseline = data[0].value;
   const isUp = data[data.length - 1].value >= baseline;
