@@ -87,3 +87,34 @@ All bugs and gaps identified during FA-9 implementation were addressed before th
 
 - `window.HTMLElement.prototype.scrollIntoView = vi.fn()` required in ChatPanel render tests — jsdom does not implement `scrollIntoView`
 - Recharts `ERR_INCOMPLETE_CHUNKED_ENCODING` in browser console after bad backend import is an SSE connection drop, not a chart issue
+
+---
+
+## FA-10 / FA-11 / FA-12 Review (2026-03-11)
+
+Reviewed by: Claude Sonnet 4.6
+Date: 2026-03-11
+
+---
+
+### FA-10 — MainChart
+
+No bugs found. No test changes required (MainChart render tests are covered by the existing pattern; Recharts renders no SVG in jsdom so tests assert on empty-state text absence).
+
+### FA-11 — Dockerfile / Scripts
+
+No bugs found at time of PR. Post-merge issue discovered: `oven/bun:1` build stage triggers SIGTRAP in Podman due to seccomp restrictions. Fixed by switching Stage 1 from `oven/bun:1` to `node:22-slim` with `npx next build` (identical output, no Bun runtime required in the container build).
+
+Secondary TypeScript issues surfaced by the stricter Node build:
+- `MainChart.tsx` `Tooltip` formatter typed `v: number` — must be `(v) => [formatPrice(typeof v === "number" ? v : 0), ticker]`
+- `PLChart.tsx` same issue — same fix applied
+
+### FA-12 — E2E Tests
+
+Code review caught three issues before PR was merged:
+
+| Issue | Fix |
+| --- | --- |
+| Healthcheck used `"python"` — not in `python:3.12-slim` PATH | Changed to `"python3"` |
+| Cash selector matched Portfolio total (changes on price ticks) | Scoped to Cash label parent: `getByText('Cash').locator('..').locator('span').last()` |
+| "Input disabled while loading" test — instant mock backend makes disabled window < 1ms, unwinnable race | Test removed |

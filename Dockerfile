@@ -1,10 +1,11 @@
 # Stage 1: Build frontend static export
-FROM oven/bun:1 AS frontend-build
+# Using Node instead of Bun to avoid seccomp issues with Podman
+FROM node:22-slim AS frontend-build
 WORKDIR /build/frontend
-COPY frontend/package.json frontend/bun.lock ./
-RUN bun install --frozen-lockfile
+COPY frontend/package.json ./
+RUN npm install
 COPY frontend/ .
-RUN bun run build
+RUN npx next build
 
 # Stage 2: Runtime (Python 3.12)
 FROM python:3.12-slim

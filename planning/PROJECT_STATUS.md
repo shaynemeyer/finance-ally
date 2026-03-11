@@ -1,6 +1,6 @@
 # Finance Ally — Project Status
 
-Last updated: 2026-03-11 (FA-9 complete)
+Last updated: 2026-03-11 (FA-12 complete)
 
 ---
 
@@ -17,17 +17,17 @@ Last updated: 2026-03-11 (FA-9 complete)
 | FA-7   | Watchlist panel, SSE price streaming, sparklines, connection status                            | #8  |
 | FA-8   | Portfolio heatmap (treemap), P&L chart (line), positions table, trade bar                      | #9  |
 | FA-9   | AI chat sidebar — ChatPanel, chatStore, inline trade/watchlist confirmations, clear history    | #10 |
+| FA-10  | Main ticker chart — MainChart (Recharts LineChart), selected ticker price history from SSE     | #11 |
+| FA-11  | Multi-stage Dockerfile (Node 22 → Python 3.12), start/stop scripts (Podman + Docker)          | #12 |
+| FA-12  | Playwright E2E test suite — docker-compose.test.yml, 14 tests across 5 spec files             | #13 |
 
 ---
 
 ## Remaining
 
-| What                       | Notes                                                                                            |
-| -------------------------- | ------------------------------------------------------------------------------------------------ |
-| ~~AI chat panel (frontend)~~ | Done in FA-9                                                                                   |
-| Main chart area (frontend) | Larger price chart for selected ticker; click watchlist row to select                            |
-| Docker / deployment        | Multi-stage Dockerfile (Node → Python), start/stop scripts (Podman + Docker), docker-compose.yml |
-| E2E tests                  | Playwright in `test/`, docker-compose.test.yml, LLM_MOCK=true for deterministic runs             |
+| What      | Notes                                                                 |
+| --------- | --------------------------------------------------------------------- |
+| FA-45     | Realized P&L tracking — per-trade and aggregate display for taxes     |
 
 ---
 
@@ -104,6 +104,8 @@ frontend/src/
     │   ├── PLChart.tsx             # Recharts LineChart, portfolio value over time
     │   ├── PortfolioHeatmap.tsx    # Recharts Treemap, sized by weight, colored by P&L
     │   └── PositionsTable.tsx      # tabular positions with unrealized P&L
+    ├── chart/
+    │   └── MainChart.tsx           # Recharts LineChart, price history for selected ticker from SSE
     ├── trading/
     │   └── TradeBar.tsx            # ticker + qty, buy/sell, last trade confirmation
     ├── chat/
@@ -117,6 +119,7 @@ frontend/src/
 
 **Backend** — 83 tests passing across 6 files
 **Frontend** — 95 tests passing across 15 files
+**E2E** — 14 Playwright tests across 5 spec files (`test/tests/`)
 
 Frontend test files:
 
@@ -152,3 +155,6 @@ Frontend test files:
 - **Chat optimistic UI** — user message added immediately with client UUID; on success `fetchHistory()` replaces store with server-canonical list (avoids duplicate IDs)
 - **LLM model** — `openai/gpt-4o-mini` via OpenRouter; `openai/gpt-oss-120b` was replaced because it leaked chain-of-thought into the `message` field
 - **Chat clear** — `DELETE /api/chat` uses `select` + `session.delete(row)` per instance (SQLModel does not export bulk `delete()`)
+- **Dockerfile build stage** — uses `node:22-slim` + `npx next build` instead of `oven/bun:1`; Bun triggers SIGTRAP in Podman due to seccomp restrictions
+- **E2E isolation** — `tmpfs` mount for `/app/db` in `test/docker-compose.test.yml` gives each test run a fresh database without named volume cleanup
+- **SSE resilience test** — uses `context.setOffline()` to interrupt the existing SSE connection; `page.route()` only affects new requests and cannot cut a live connection
