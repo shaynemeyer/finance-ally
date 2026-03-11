@@ -56,3 +56,34 @@ All bugs, logic errors, test gaps, and code quality issues identified in the com
 - Recharts `ResponsiveContainer` render tests require `global.ResizeObserver = class { ... }` (must be a class, not an arrow function) — jsdom does not implement `ResizeObserver`
 - Recharts renders no SVG in jsdom (zero layout dimensions); render tests assert on empty-state absence rather than SVG presence
 - `PLChart.test.ts` inline `formatTime` updated to match implementation (removed `timeZone: "UTC"`)
+
+---
+
+## FA-9 Review (2026-03-11)
+
+Reviewed by: Claude Sonnet 4.6
+Date: 2026-03-11
+
+---
+
+All bugs and gaps identified during FA-9 implementation were addressed before the PR was created. Frontend: 95 tests passing (15 files).
+
+### Bugs fixed
+
+| File | Issue | Fix applied |
+| --- | --- | --- |
+| `chatStore.ts` | Optimistic user message used client-generated UUID; `fetchHistory()` on next mount produced duplicate messages | After successful POST, call `get().fetchHistory()` to replace store with server-canonical history |
+| `ChatPanel.tsx` | `action.price?.toFixed(2)` renders `"@ $"` when price is undefined (typed optional) | Added null guard: `action.price != null ? action.price.toFixed(2) : "?"` |
+| `routes/chat.py` | `DELETE /api/chat` used bulk `delete()` imported from `sqlmodel`, which is not exported — caused module import failure and server crash | Changed to `select` + `session.delete(row)` per-instance pattern |
+| `services/llm.py` | `openai/gpt-oss-120b` leaked chain-of-thought into the `message` field | Switched to `openai/gpt-4o-mini` which reliably follows json_schema structured output |
+
+### Test gaps fixed
+
+| File | Issue | Fix applied |
+| --- | --- | --- |
+| `chatStore.test.ts` | Non-ok `fetchHistory` test asserted on already-empty state from `beforeEach` — trivially passing | Pre-seed a message, then assert it is preserved (length 1) after non-ok response |
+
+## Notes
+
+- `window.HTMLElement.prototype.scrollIntoView = vi.fn()` required in ChatPanel render tests — jsdom does not implement `scrollIntoView`
+- Recharts `ERR_INCOMPLETE_CHUNKED_ENCODING` in browser console after bad backend import is an SSE connection drop, not a chart issue

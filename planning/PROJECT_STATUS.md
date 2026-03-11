@@ -1,6 +1,6 @@
 # Finance Ally — Project Status
 
-Last updated: 2026-03-10 (post-review fixes applied)
+Last updated: 2026-03-11 (FA-9 complete)
 
 ---
 
@@ -16,6 +16,7 @@ Last updated: 2026-03-10 (post-review fixes applied)
 | FA-6   | LLM/chat integration — OpenRouter, structured outputs, auto-execute trades/watchlist           | #7  |
 | FA-7   | Watchlist panel, SSE price streaming, sparklines, connection status                            | #8  |
 | FA-8   | Portfolio heatmap (treemap), P&L chart (line), positions table, trade bar                      | #9  |
+| FA-9   | AI chat sidebar — ChatPanel, chatStore, inline trade/watchlist confirmations, clear history    | #10 |
 
 ---
 
@@ -23,7 +24,7 @@ Last updated: 2026-03-10 (post-review fixes applied)
 
 | What                       | Notes                                                                                            |
 | -------------------------- | ------------------------------------------------------------------------------------------------ |
-| AI chat panel (frontend)   | Message input, scrolling history, loading indicator, inline trade/watchlist confirmations        |
+| ~~AI chat panel (frontend)~~ | Done in FA-9                                                                                   |
 | Main chart area (frontend) | Larger price chart for selected ticker; click watchlist row to select                            |
 | Docker / deployment        | Multi-stage Dockerfile (Node → Python), start/stop scripts (Podman + Docker), docker-compose.yml |
 | E2E tests                  | Playwright in `test/`, docker-compose.test.yml, LLM_MOCK=true for deterministic runs             |
@@ -57,10 +58,10 @@ backend/
 │   ├── stream.py           # GET /api/stream/prices (SSE)
 │   ├── watchlist.py        # GET/POST/DELETE /api/watchlist
 │   ├── portfolio.py        # GET /api/portfolio, POST /api/portfolio/trade, GET /api/portfolio/history
-│   └── chat.py             # GET /api/chat, POST /api/chat
+│   └── chat.py             # GET /api/chat, POST /api/chat, DELETE /api/chat
 ├── services/
 │   ├── context.py          # Builds portfolio context string for LLM system prompt
-│   ├── llm.py              # OpenRouter call with structured output schema
+│   ├── llm.py              # OpenRouter call (gpt-4o-mini) with structured output schema
 │   └── executor.py         # Auto-executes trades and watchlist changes from LLM response
 └── tests/
     ├── test_simulator.py
@@ -79,15 +80,17 @@ backend/
 frontend/src/
 ├── app/
 │   ├── layout.tsx          # <html className="dark">, global font
-│   ├── page.tsx            # Main SPA layout: watchlist + chart + portfolio + trade bar
+│   ├── page.tsx            # Main SPA layout: watchlist + chart + portfolio + trade bar + chat
 │   └── globals.css         # Tailwind v4, dark theme variables, flash-up/flash-down CSS
 ├── types/
 │   ├── market.ts           # PriceEventSchema, WatchlistItemSchema (Zod)
-│   └── portfolio.ts        # PositionSchema, PortfolioSchema, SnapshotSchema (Zod)
+│   ├── portfolio.ts        # PositionSchema, PortfolioSchema, SnapshotSchema (Zod)
+│   └── chat.ts             # ChatMessageSchema, TradeActionSchema, WatchlistActionSchema (Zod)
 ├── store/
 │   ├── priceStore.ts       # prices map, history (100 pts/ticker), connectionStatus
 │   ├── watchlistStore.ts   # tickers array, selectedTicker
-│   └── portfolioStore.ts   # portfolio state, history; fetchPortfolio, fetchHistory
+│   ├── portfolioStore.ts   # portfolio state, history; fetchPortfolio, fetchHistory
+│   └── chatStore.ts        # messages, isLoading; fetchHistory, sendMessage, clearHistory
 ├── hooks/
 │   └── usePriceStream.ts   # EventSource SSE, cancelled-flag cleanup on unmount
 └── components/
@@ -103,6 +106,8 @@ frontend/src/
     │   └── PositionsTable.tsx      # tabular positions with unrealized P&L
     ├── trading/
     │   └── TradeBar.tsx            # ticker + qty, buy/sell, last trade confirmation
+    ├── chat/
+    │   └── ChatPanel.tsx           # collapsible sidebar; history, input, action badges, clear
     └── ui/                         # ShadCN: button, input
 ```
 
@@ -111,13 +116,14 @@ frontend/src/
 ## Test Coverage
 
 **Backend** — 83 tests passing across 6 files
-**Frontend** — 73 tests passing across 13 files
+**Frontend** — 95 tests passing across 15 files
 
 Frontend test files:
 
 - `store/__tests__/priceStore.test.ts` — 7 tests
 - `store/__tests__/watchlistStore.test.ts` — 7 tests
 - `store/__tests__/portfolioStore.test.ts` — 8 tests (includes network rejection)
+- `store/__tests__/chatStore.test.ts` — 8 tests (fetch history, send message, error paths)
 - `hooks/__tests__/usePriceStream.test.ts` — 6 tests
 - `components/header/__tests__/ConnectionStatus.test.tsx` — 5 tests
 - `components/watchlist/__tests__/Sparkline.test.tsx` — 7 tests
@@ -128,6 +134,7 @@ Frontend test files:
 - `components/portfolio/__tests__/PortfolioHeatmap.render.test.tsx` — 3 tests (component render)
 - `components/portfolio/__tests__/PositionsTable.test.ts` — 2 tests (pure functions)
 - `components/portfolio/__tests__/PositionsTable.render.test.tsx` — 6 tests (component render)
+- `components/chat/__tests__/ChatPanel.render.test.tsx` — 14 tests (render, collapse, actions, loading)
 
 ---
 
@@ -142,3 +149,6 @@ Frontend test files:
 - **Price flash** — DOM ref + `void el.offsetHeight` reflow restarts CSS animation on same-direction ticks
 - **`asyncio_mode = "auto"`** — no `@pytest.mark.asyncio` decorator needed in backend tests
 - **SSE test pattern** — consume `body_iterator` directly; avoid `ASGITransport` (deadlocks with infinite generators)
+- **Chat optimistic UI** — user message added immediately with client UUID; on success `fetchHistory()` replaces store with server-canonical list (avoids duplicate IDs)
+- **LLM model** — `openai/gpt-4o-mini` via OpenRouter; `openai/gpt-oss-120b` was replaced because it leaked chain-of-thought into the `message` field
+- **Chat clear** — `DELETE /api/chat` uses `select` + `session.delete(row)` per instance (SQLModel does not export bulk `delete()`)
