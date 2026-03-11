@@ -69,6 +69,7 @@ export function ChatPanel() {
   const isLoading = useChatStore((s) => s.isLoading);
   const fetchHistory = useChatStore((s) => s.fetchHistory);
   const sendMessage = useChatStore((s) => s.sendMessage);
+  const clearHistory = useChatStore((s) => s.clearHistory);
 
   const [input, setInput] = useState("");
   const [collapsed, setCollapsed] = useState(false);
@@ -116,13 +117,24 @@ export function ChatPanel() {
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           AI Chat
         </span>
-        <button
-          onClick={() => setCollapsed(true)}
-          className="text-muted-foreground hover:text-foreground text-xs transition-colors"
-          aria-label="Collapse chat"
-        >
-          &#x2715;
-        </button>
+        <div className="flex items-center gap-2">
+          {messages.length > 0 && (
+            <button
+              onClick={clearHistory}
+              className="text-muted-foreground hover:text-destructive text-xs transition-colors"
+              aria-label="Clear chat history"
+            >
+              Clear
+            </button>
+          )}
+          <button
+            onClick={() => setCollapsed(true)}
+            className="text-muted-foreground hover:text-foreground text-xs transition-colors"
+            aria-label="Collapse chat"
+          >
+            &#x2715;
+          </button>
+        </div>
       </div>
 
       {/* Messages */}

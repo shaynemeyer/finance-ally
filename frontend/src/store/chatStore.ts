@@ -7,6 +7,7 @@ interface ChatState {
   isLoading: boolean;
   fetchHistory: () => Promise<void>;
   sendMessage: (message: string) => Promise<void>;
+  clearHistory: () => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -21,6 +22,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ messages: data });
     } catch {
       set({ messages: [] });
+    }
+  },
+
+  clearHistory: async () => {
+    try {
+      const res = await fetch("/api/chat", { method: "DELETE" });
+      if (res.ok) set({ messages: [] });
+    } catch {
+      // ignore
     }
   },
 
