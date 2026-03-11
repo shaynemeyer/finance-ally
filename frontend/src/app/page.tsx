@@ -10,6 +10,7 @@ import { PortfolioHeatmap } from "@/components/portfolio/PortfolioHeatmap";
 import { PLChart } from "@/components/portfolio/PLChart";
 import { TradeBar } from "@/components/trading/TradeBar";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { MainChart } from "@/components/chart/MainChart";
 
 function AppShell() {
   usePriceStream();
@@ -61,9 +62,14 @@ function AppShell() {
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Top row: chart placeholder + heatmap */}
           <div className="flex border-b border-border" style={{ height: "220px" }}>
-            {/* Chart placeholder (FA-10) */}
-            <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs border-r border-border">
-              Select a ticker to view chart
+            {/* Main ticker chart */}
+            <div className="flex-1 flex flex-col border-r border-border min-w-0">
+              <div className="px-3 py-1.5 border-b border-border shrink-0">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Chart</span>
+              </div>
+              <div className="flex-1 min-h-0">
+                <MainChart />
+              </div>
             </div>
             {/* Portfolio heatmap */}
             <div className="flex flex-col border-l border-border" style={{ width: "260px" }}>
