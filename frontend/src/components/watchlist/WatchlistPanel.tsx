@@ -69,16 +69,16 @@ export function WatchlistPanel() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                <th className="px-3 py-1.5 text-left text-xs text-muted-foreground font-medium">
+                <th className="px-2 py-1.5 text-left text-xs text-muted-foreground font-medium">
                   Ticker
                 </th>
-                <th className="px-3 py-1.5 text-right text-xs text-muted-foreground font-medium">
+                <th className="px-2 py-1.5 text-right text-xs text-muted-foreground font-medium">
                   Price
                 </th>
-                <th className="px-3 py-1.5 text-right text-xs text-muted-foreground font-medium">
+                <th className="px-2 py-1.5 text-right text-xs text-muted-foreground font-medium">
                   Chg%
                 </th>
-                <th className="px-3 py-1.5 text-xs text-muted-foreground font-medium">
+                <th className="px-2 py-1.5 text-xs text-muted-foreground font-medium">
                   Chart
                 </th>
                 <th />

@@ -11,10 +11,11 @@ interface WatchlistRowProps {
 }
 
 const FLASH_DURATION_MS = 500;
+const EMPTY_HISTORY: number[] = [];
 
 export function WatchlistRow({ ticker }: WatchlistRowProps) {
   const priceData = usePriceStore((s) => s.prices[ticker]);
-  const history = usePriceStore((s) => s.history[ticker] ?? []);
+  const history = usePriceStore((s) => s.history[ticker]);
   const selectTicker = useWatchlistStore((s) => s.selectTicker);
   const selectedTicker = useWatchlistStore((s) => s.selectedTicker);
   const removeTicker = useWatchlistStore((s) => s.removeTicker);
@@ -58,11 +59,11 @@ export function WatchlistRow({ ticker }: WatchlistRowProps) {
       }`}
       onClick={() => selectTicker(ticker)}
     >
-      <td className="px-3 py-2 font-mono font-semibold text-sm text-foreground">
+      <td className="px-2 py-2 font-mono font-semibold text-sm text-foreground">
         {ticker}
       </td>
       <td
-        className={`px-3 py-2 font-mono text-sm text-right tabular-nums ${
+        className={`px-2 py-2 font-mono text-sm text-right tabular-nums ${
           priceData?.direction === "up"
             ? "text-green-400"
             : priceData?.direction === "down"
@@ -73,7 +74,7 @@ export function WatchlistRow({ ticker }: WatchlistRowProps) {
         {priceData ? `$${priceData.price.toFixed(2)}` : "—"}
       </td>
       <td
-        className={`px-3 py-2 text-xs text-right tabular-nums ${
+        className={`px-2 py-2 text-xs text-right tabular-nums ${
           changePct === null
             ? "text-muted-foreground"
             : isPositive
@@ -85,10 +86,10 @@ export function WatchlistRow({ ticker }: WatchlistRowProps) {
           ? `${isPositive ? "+" : ""}${changePct.toFixed(2)}%`
           : "—"}
       </td>
-      <td className="px-3 py-2">
-        <Sparkline data={history} />
+      <td className="px-2 py-2">
+        <Sparkline data={history ?? EMPTY_HISTORY} width={60} />
       </td>
-      <td className="px-3 py-2 text-right">
+      <td className="px-2 py-2 text-right">
         <button
           onClick={handleRemove}
           className="text-muted-foreground hover:text-destructive transition-colors"

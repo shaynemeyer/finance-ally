@@ -43,7 +43,7 @@ export function PLChart() {
   const isUp = data[data.length - 1].value >= baseline;
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" minHeight={80}>
       <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 4 }}>
         <XAxis
           dataKey="time"

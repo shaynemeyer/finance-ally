@@ -56,7 +56,7 @@ Single Docker container on port 8000:
 cd backend && uv run uvicorn main:app --reload
 
 # Frontend
-cd frontend && npm install && npm run dev
+cd frontend && bun install && bun run dev
 ```
 
 ## Testing

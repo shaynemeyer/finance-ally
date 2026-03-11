@@ -15,7 +15,8 @@ export function usePriceStream() {
 
     function connect() {
       setConnectionStatus("reconnecting");
-      es = new EventSource("/api/stream/prices");
+      const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+      es = new EventSource(`${base}/api/stream/prices`);
 
       es.onopen = () => setConnectionStatus("connected");
 
