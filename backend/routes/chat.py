@@ -39,6 +39,16 @@ def get_chat_history(session: Session = Depends(get_session)):
     ]
 
 
+@router.delete("/api/chat", status_code=204)
+def clear_chat_history(session: Session = Depends(get_session)):
+    messages = session.exec(
+        select(ChatMessage).where(ChatMessage.user_id == "default")
+    ).all()
+    for msg in messages:
+        session.delete(msg)
+    session.commit()
+
+
 @router.post("/api/chat", status_code=201)
 def post_chat(
     body: ChatRequest,
