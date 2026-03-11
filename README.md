@@ -61,10 +61,30 @@ cd frontend && bun install && bun run dev
 
 ## Testing
 
-E2E tests use Playwright via a separate Docker Compose setup:
+### E2E tests (Playwright)
+
+Build the image first, then run the test suite:
 
 ```bash
-cd test && docker compose -f docker-compose.test.yml up
+# Docker
+docker build -t finance-ally .
+docker compose -f test/docker-compose.test.yml up --abort-on-container-exit
+docker compose -f test/docker-compose.test.yml down
+
+# Podman
+podman build -t finance-ally .
+podman compose -f test/docker-compose.test.yml up --abort-on-container-exit
+podman compose -f test/docker-compose.test.yml down
 ```
 
-Unit tests: `pytest` (backend), React Testing Library (frontend).
+Tests run with `LLM_MOCK=true` and an ephemeral database — no `.env` file required.
+
+### Unit tests
+
+```bash
+# Backend
+cd backend && uv run pytest
+
+# Frontend
+cd frontend && bun run test
+```

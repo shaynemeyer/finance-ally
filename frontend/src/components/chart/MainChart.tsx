@@ -85,7 +85,7 @@ export function MainChart() {
               contentStyle={{ background: "#161b22", border: "1px solid #30363d", borderRadius: 4 }}
               labelStyle={{ display: "none" }}
               itemStyle={{ color: "#e6edf3", fontSize: 11 }}
-              formatter={(v: number) => [formatPrice(v), ticker]}
+              formatter={(v) => [formatPrice(typeof v === "number" ? v : 0), ticker]}
             />
             <Line
               type="monotone"

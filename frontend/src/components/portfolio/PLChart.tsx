@@ -64,7 +64,7 @@ export function PLChart() {
           contentStyle={{ background: "#161b22", border: "1px solid #30363d", borderRadius: 4 }}
           labelStyle={{ color: "#8b949e", fontSize: 10 }}
           itemStyle={{ color: "#e6edf3", fontSize: 11 }}
-          formatter={(v: number | undefined) => [formatValue(v ?? 0), "Portfolio"]}
+          formatter={(v) => [formatValue(typeof v === "number" ? v : 0), "Portfolio"]}
         />
         <Line
           type="monotone"
