@@ -54,7 +54,7 @@ def post_chat(
     recent = session.exec(
         select(ChatMessage)
         .where(ChatMessage.user_id == "default")
-        .order_by(ChatMessage.created_at.desc(), ChatMessage.id.desc())
+        .order_by(ChatMessage.created_at.desc())
         .limit(_HISTORY_LIMIT)
     ).all()
     history_messages = [
@@ -64,13 +64,16 @@ def post_chat(
 
     portfolio_context = load_portfolio_context(session, provider)
 
-    # Save user message
+    # Save user message before calling LLM so it persists even if LLM fails
     user_msg = ChatMessage(user_id="default", role="user", content=body.message)
     session.add(user_msg)
     session.commit()
 
     # Call LLM
-    llm_response = call_llm(history_messages, portfolio_context)
+    try:
+        llm_response = call_llm(history_messages, portfolio_context)
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail=f"LLM error: {exc}") from exc
 
     # Auto-execute trades and watchlist changes
     actions: list[dict] = []

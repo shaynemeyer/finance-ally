@@ -88,16 +88,20 @@ def call_llm(history: list[dict], portfolio_context: str) -> LLMResponse:
         },
     }
 
-    response = httpx.post(
-        OPENROUTER_URL,
-        json=payload,
-        headers={
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json",
-        },
-        timeout=30.0,
-    )
-    response.raise_for_status()
+    # Synchronous httpx call (30s timeout). Acceptable for single-user; revisit if concurrency is needed.
+    try:
+        response = httpx.post(
+            OPENROUTER_URL,
+            json=payload,
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            timeout=30.0,
+        )
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        raise ValueError(f"OpenRouter HTTP {exc.response.status_code}") from exc
 
     try:
         content = response.json()["choices"][0]["message"]["content"]

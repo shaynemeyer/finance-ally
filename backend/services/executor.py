@@ -56,7 +56,7 @@ def execute_trade(session: Session, provider, ticker: str, side: str, quantity: 
 
         position.quantity -= quantity
         position.updated_at = _now()
-        if position.quantity <= 1e-9:
+        if position.quantity <= 1e-6:
             session.delete(position)
         user.cash_balance += total_cost
 

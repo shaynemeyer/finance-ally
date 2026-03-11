@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 // Inline the pure functions from PLChart for unit testing
 function formatTime(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 function formatValue(v: number): string {
@@ -11,16 +11,14 @@ function formatValue(v: number): string {
 }
 
 describe("PLChart formatTime", () => {
-  it("formats ISO timestamp using UTC timezone", () => {
-    // Parse the result and verify the UTC time is reflected correctly
-    // toLocaleTimeString output is locale-dependent (12h or 24h), so we check
-    // by round-tripping: a UTC 14:30 timestamp should differ from a UTC 02:30 timestamp
+  it("formats two different hours to different strings", () => {
+    // toLocaleTimeString output is locale-dependent (12h or 24h); assert inequality only
     const t1430 = formatTime("2024-01-15T14:30:00Z");
     const t0230 = formatTime("2024-01-15T02:30:00Z");
     expect(t1430).not.toBe(t0230);
   });
 
-  it("uses UTC so UTC midnight differs from UTC noon", () => {
+  it("midnight and noon produce different strings", () => {
     const midnight = formatTime("2024-01-15T00:00:00Z");
     const noon = formatTime("2024-01-15T12:00:00Z");
     expect(midnight).not.toBe(noon);

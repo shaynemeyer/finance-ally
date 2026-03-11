@@ -49,7 +49,7 @@ export function PositionsTable() {
                   ${pos.value.toFixed(2)}
                 </td>
                 <td className={`px-3 py-1.5 font-mono text-sm text-right tabular-nums ${pnlColor}`}>
-                  {isProfit ? "+" : ""}${pos.unrealized_pnl.toFixed(2)}
+                  {isProfit ? "+$" : "-$"}{Math.abs(pos.unrealized_pnl).toFixed(2)}
                 </td>
                 <td className={`px-3 py-1.5 font-mono text-sm text-right tabular-nums ${pnlColor}`}>
                   {isProfit ? "+" : ""}{pos.unrealized_pnl_pct.toFixed(2)}%

@@ -176,6 +176,14 @@ def test_post_chat_empty_message_returns_400(client_and_engine):
     assert response.status_code == 400
 
 
+def test_post_chat_llm_error_returns_502(client_and_engine):
+    client, _ = client_and_engine
+    with patch("routes.chat.call_llm", side_effect=ValueError("OpenRouter HTTP 429")):
+        response = client.post("/api/chat", json={"message": "Hello"})
+    assert response.status_code == 502
+    assert "LLM error" in response.json()["detail"]
+
+
 # ---------------------------------------------------------------------------
 # POST /api/chat — trade auto-execution
 # ---------------------------------------------------------------------------

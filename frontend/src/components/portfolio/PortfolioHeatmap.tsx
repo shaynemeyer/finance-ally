@@ -81,8 +81,7 @@ export function PortfolioHeatmap() {
       <Treemap
         data={data}
         dataKey="size"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        content={<HeatmapCell /> as any}
+        content={(props: CellProps) => <HeatmapCell {...props} />}
       />
     </ResponsiveContainer>
   );

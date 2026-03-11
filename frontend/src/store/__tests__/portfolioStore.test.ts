@@ -51,6 +51,12 @@ describe("portfolioStore.fetchPortfolio", () => {
     await usePortfolioStore.getState().fetchPortfolio();
     expect(usePortfolioStore.getState().portfolio).toBeNull();
   });
+
+  it("sets portfolio to null when fetch rejects (network error)", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
+    await usePortfolioStore.getState().fetchPortfolio();
+    expect(usePortfolioStore.getState().portfolio).toBeNull();
+  });
 });
 
 describe("portfolioStore.fetchHistory", () => {
@@ -75,6 +81,12 @@ describe("portfolioStore.fetchHistory", () => {
       ok: true,
       json: async () => [{ bad: "data" }],
     }));
+    await usePortfolioStore.getState().fetchHistory();
+    expect(usePortfolioStore.getState().history).toEqual([]);
+  });
+
+  it("sets history to empty array when fetch rejects (network error)", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
     await usePortfolioStore.getState().fetchHistory();
     expect(usePortfolioStore.getState().history).toEqual([]);
   });

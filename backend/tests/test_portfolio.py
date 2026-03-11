@@ -79,6 +79,18 @@ def test_get_portfolio_empty_positions(client):
     assert data["positions"] == []
 
 
+def test_get_portfolio_position_with_zero_avg_cost(client_and_engine):
+    client, mem_engine = client_and_engine
+    with Session(mem_engine) as session:
+        session.add(Position(user_id="default", ticker="AAPL", quantity=5, avg_cost=0.0))
+        session.commit()
+
+    response = client.get("/api/portfolio")
+    assert response.status_code == 200
+    pos = response.json()["positions"][0]
+    assert pos["unrealized_pnl_pct"] == 0.0
+
+
 def test_get_portfolio_with_position(client_and_engine):
     client, mem_engine = client_and_engine
     with Session(mem_engine) as session:

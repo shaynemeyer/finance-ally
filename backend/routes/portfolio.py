@@ -38,7 +38,7 @@ def get_portfolio(request: Request, session: Session = Depends(get_session)):
         current_price = update.price if update else pos.avg_cost
         value = pos.quantity * current_price
         unrealized_pnl = (current_price - pos.avg_cost) * pos.quantity
-        unrealized_pnl_pct = (current_price - pos.avg_cost) / pos.avg_cost * 100
+        unrealized_pnl_pct = (current_price - pos.avg_cost) / pos.avg_cost * 100 if pos.avg_cost != 0 else 0.0
         total_position_value += value
         position_data.append({
             "ticker": pos.ticker,
@@ -122,7 +122,7 @@ def execute_trade(
 
         position.quantity -= body.quantity
         position.updated_at = _now()
-        if position.quantity <= 1e-9:
+        if position.quantity <= 1e-6:
             session.delete(position)
         user.cash_balance += total_cost
 

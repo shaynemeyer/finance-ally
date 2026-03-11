@@ -224,3 +224,7 @@ db/finance-ally.db
 db/finance-ally.db-shm
 db/finance-ally.db-wal
 .env.local
+
+# Ignore .claude directories which are created by feature-dev
+backend/.claude/
+frontend/.claude/
