@@ -1,17 +1,29 @@
 import { create } from "zustand";
 import { z } from "zod";
-import { Portfolio, PortfolioSchema, Snapshot, SnapshotSchema } from "@/types/portfolio";
+import {
+  Portfolio,
+  PortfolioSchema,
+  Snapshot,
+  SnapshotSchema,
+  Trade,
+  TradeHistorySchema,
+} from "@/types/portfolio";
 
 interface PortfolioState {
   portfolio: Portfolio | null;
   history: Snapshot[];
+  trades: Trade[];
+  aggregateRealizedPnl: number;
   fetchPortfolio: () => Promise<void>;
   fetchHistory: () => Promise<void>;
+  fetchTrades: () => Promise<void>;
 }
 
 export const usePortfolioStore = create<PortfolioState>((set) => ({
   portfolio: null,
   history: [],
+  trades: [],
+  aggregateRealizedPnl: 0,
 
   fetchPortfolio: async () => {
     try {
@@ -32,6 +44,17 @@ export const usePortfolioStore = create<PortfolioState>((set) => ({
       set({ history: data });
     } catch {
       set({ history: [] });
+    }
+  },
+
+  fetchTrades: async () => {
+    try {
+      const res = await fetch("/api/portfolio/trades");
+      if (!res.ok) return;
+      const data = TradeHistorySchema.parse(await res.json());
+      set({ trades: data.trades, aggregateRealizedPnl: data.aggregate_realized_pnl });
+    } catch {
+      set({ trades: [], aggregateRealizedPnl: 0 });
     }
   },
 }));

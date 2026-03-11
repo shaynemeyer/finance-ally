@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePriceStream } from "@/hooks/usePriceStream";
 import { usePortfolioStore } from "@/store/portfolioStore";
 import { WatchlistPanel } from "@/components/watchlist/WatchlistPanel";
 import { ConnectionStatus } from "@/components/header/ConnectionStatus";
 import { PositionsTable } from "@/components/portfolio/PositionsTable";
+import { TradeHistoryTable } from "@/components/portfolio/TradeHistoryTable";
 import { PortfolioHeatmap } from "@/components/portfolio/PortfolioHeatmap";
 import { PLChart } from "@/components/portfolio/PLChart";
 import { TradeBar } from "@/components/trading/TradeBar";
@@ -14,20 +15,24 @@ import { MainChart } from "@/components/chart/MainChart";
 
 function AppShell() {
   usePriceStream();
-  const { portfolio, fetchPortfolio, fetchHistory } = usePortfolioStore();
+  const { portfolio, fetchPortfolio, fetchHistory, fetchTrades, aggregateRealizedPnl } =
+    usePortfolioStore();
+  const [activeTab, setActiveTab] = useState<"positions" | "trades">("positions");
 
   useEffect(() => {
     fetchPortfolio();
     fetchHistory();
+    fetchTrades();
     const interval = setInterval(() => {
       fetchPortfolio();
       fetchHistory();
     }, 10_000);
     return () => clearInterval(interval);
-  }, [fetchPortfolio, fetchHistory]);
+  }, [fetchPortfolio, fetchHistory, fetchTrades]);
 
   const totalValue = portfolio?.total_value ?? 0;
   const cashBalance = portfolio?.cash_balance ?? 0;
+  const realizedPnlColor = aggregateRealizedPnl >= 0 ? "text-green-400" : "text-red-400";
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -45,6 +50,16 @@ function AppShell() {
             <span className="text-xs text-muted-foreground">Cash</span>
             <span className="font-mono text-sm tabular-nums text-foreground">
               ${cashBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">Realized P&L</span>
+            <span className={`font-mono text-sm tabular-nums ${realizedPnlColor}`}>
+              {aggregateRealizedPnl >= 0 ? "+$" : "-$"}
+              {Math.abs(aggregateRealizedPnl).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </span>
           </div>
           <ConnectionStatus />
@@ -100,13 +115,32 @@ function AppShell() {
             </div>
           </div>
 
-          {/* Positions table */}
+          {/* Positions / Trade History tabs */}
           <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-            <div className="px-3 py-1.5 border-b border-border shrink-0">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Positions</span>
+            <div className="flex border-b border-border shrink-0">
+              <button
+                onClick={() => setActiveTab("positions")}
+                className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wider ${
+                  activeTab === "positions"
+                    ? "text-foreground border-b-2 border-accent"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Positions
+              </button>
+              <button
+                onClick={() => setActiveTab("trades")}
+                className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wider ${
+                  activeTab === "trades"
+                    ? "text-foreground border-b-2 border-accent"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Trade History
+              </button>
             </div>
             <div className="flex-1 overflow-hidden">
-              <PositionsTable />
+              {activeTab === "positions" ? <PositionsTable /> : <TradeHistoryTable />}
             </div>
           </div>
         </div>

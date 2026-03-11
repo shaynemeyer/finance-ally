@@ -240,6 +240,131 @@ def test_sell_no_position_returns_400(client):
     assert response.status_code == 400
 
 
+def test_sell_captures_realized_pnl(client_and_engine):
+    client, mem_engine = client_and_engine
+    # Buy at avg_cost 140, sell at current price 150 → realized P&L = (150-140)*4 = 40
+    with Session(mem_engine) as session:
+        session.add(Position(user_id="default", ticker="AAPL", quantity=10, avg_cost=140.0))
+        session.commit()
+
+    client.post("/api/portfolio/trade", json={"ticker": "AAPL", "side": "sell", "quantity": 4})
+
+    with Session(mem_engine) as session:
+        trade = session.exec(
+            select(Trade).where(Trade.ticker == "AAPL", Trade.side == "sell")
+        ).first()
+        assert trade is not None
+        assert trade.realized_pnl == pytest.approx((150.0 - 140.0) * 4)
+
+
+def test_sell_at_loss_captures_negative_pnl(client_and_engine):
+    client, mem_engine = client_and_engine
+    # Bought at 180, current price 150 → realized P&L = (150-180)*5 = -150
+    with Session(mem_engine) as session:
+        session.add(Position(user_id="default", ticker="AAPL", quantity=10, avg_cost=180.0))
+        session.commit()
+
+    client.post("/api/portfolio/trade", json={"ticker": "AAPL", "side": "sell", "quantity": 5})
+
+    with Session(mem_engine) as session:
+        trade = session.exec(
+            select(Trade).where(Trade.ticker == "AAPL", Trade.side == "sell")
+        ).first()
+        assert trade.realized_pnl == pytest.approx((150.0 - 180.0) * 5)
+
+
+def test_buy_has_no_realized_pnl(client_and_engine):
+    client, mem_engine = client_and_engine
+    client.post("/api/portfolio/trade", json={"ticker": "AAPL", "side": "buy", "quantity": 3})
+
+    with Session(mem_engine) as session:
+        trade = session.exec(
+            select(Trade).where(Trade.ticker == "AAPL", Trade.side == "buy")
+        ).first()
+        assert trade.realized_pnl is None
+
+
+# ---------------------------------------------------------------------------
+# GET /api/portfolio/trades
+# ---------------------------------------------------------------------------
+
+def test_get_trades_empty(client):
+    response = client.get("/api/portfolio/trades")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["trades"] == []
+    assert data["aggregate_realized_pnl"] == 0
+
+
+def test_get_trades_returns_all(client_and_engine):
+    client, mem_engine = client_and_engine
+    with Session(mem_engine) as session:
+        session.add(Position(user_id="default", ticker="AAPL", quantity=10, avg_cost=140.0))
+        session.commit()
+
+    client.post("/api/portfolio/trade", json={"ticker": "AAPL", "side": "buy", "quantity": 2})
+    client.post("/api/portfolio/trade", json={"ticker": "AAPL", "side": "sell", "quantity": 2})
+
+    response = client.get("/api/portfolio/trades")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["trades"]) == 2
+
+
+def test_get_trades_aggregate_realized_pnl(client_and_engine):
+    client, mem_engine = client_and_engine
+    # Two sell trades: (150-140)*4 = 40 and (150-140)*6 = 60 → aggregate 100
+    with Session(mem_engine) as session:
+        session.add(Position(user_id="default", ticker="AAPL", quantity=20, avg_cost=140.0))
+        session.commit()
+
+    client.post("/api/portfolio/trade", json={"ticker": "AAPL", "side": "sell", "quantity": 4})
+    client.post("/api/portfolio/trade", json={"ticker": "AAPL", "side": "sell", "quantity": 6})
+
+    response = client.get("/api/portfolio/trades")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["aggregate_realized_pnl"] == pytest.approx(100.0)
+
+
+def test_get_trades_year_filter(client_and_engine):
+    client, mem_engine = client_and_engine
+    with Session(mem_engine) as session:
+        session.add(Position(user_id="default", ticker="AAPL", quantity=10, avg_cost=140.0))
+        # Insert a trade with a past year timestamp
+        session.add(Trade(
+            user_id="default", ticker="AAPL", side="sell",
+            quantity=1, price=140.0, realized_pnl=0.0,
+            executed_at="2023-06-15T10:00:00+00:00",
+        ))
+        session.commit()
+
+    # Current year trade
+    client.post("/api/portfolio/trade", json={"ticker": "AAPL", "side": "sell", "quantity": 2})
+
+    response_2023 = client.get("/api/portfolio/trades?year=2023")
+    assert response_2023.status_code == 200
+    data_2023 = response_2023.json()
+    assert len(data_2023["trades"]) == 1
+    assert data_2023["trades"][0]["executed_at"].startswith("2023")
+
+
+def test_get_trades_response_fields(client_and_engine):
+    client, mem_engine = client_and_engine
+    with Session(mem_engine) as session:
+        session.add(Position(user_id="default", ticker="AAPL", quantity=5, avg_cost=140.0))
+        session.commit()
+
+    client.post("/api/portfolio/trade", json={"ticker": "AAPL", "side": "sell", "quantity": 3})
+
+    response = client.get("/api/portfolio/trades")
+    trade = response.json()["trades"][0]
+    assert set(trade.keys()) == {"id", "ticker", "side", "quantity", "price", "realized_pnl", "executed_at"}
+    assert trade["ticker"] == "AAPL"
+    assert trade["side"] == "sell"
+    assert trade["realized_pnl"] == pytest.approx((150.0 - 140.0) * 3)
+
+
 # ---------------------------------------------------------------------------
 # GET /api/portfolio/history
 # ---------------------------------------------------------------------------
