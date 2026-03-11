@@ -9,6 +9,7 @@ import { PositionsTable } from "@/components/portfolio/PositionsTable";
 import { PortfolioHeatmap } from "@/components/portfolio/PortfolioHeatmap";
 import { PLChart } from "@/components/portfolio/PLChart";
 import { TradeBar } from "@/components/trading/TradeBar";
+import { ChatPanel } from "@/components/chat/ChatPanel";
 
 function AppShell() {
   usePriceStream();
@@ -103,6 +104,9 @@ function AppShell() {
             </div>
           </div>
         </div>
+
+        {/* AI Chat sidebar */}
+        <ChatPanel />
       </main>
     </div>
   );
