@@ -1,0 +1,12 @@
+services:
+  app:
+    image: finance-ally
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - finance-ally-data:/app/db
+    env_file: .env
+
+volumes:
+  finance-ally-data:

@@ -1,0 +1,22 @@
+# Python
+**/__pycache__/
+**/*.py[cod]
+backend/.venv/
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Database (created at runtime via volume)
+db/*.db
+db/*.db-shm
+db/*.db-wal
+
+# Environment (passed via --env-file at runtime)
+.env
+
+# Git and docs
+.git/
+planning/
+test/
