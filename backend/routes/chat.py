@@ -2,7 +2,7 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from sqlmodel import Session, delete, select
+from sqlmodel import Session, select
 
 from database import get_session
 from models import ChatMessage
@@ -41,7 +41,11 @@ def get_chat_history(session: Session = Depends(get_session)):
 
 @router.delete("/api/chat", status_code=204)
 def clear_chat_history(session: Session = Depends(get_session)):
-    session.exec(delete(ChatMessage).where(ChatMessage.user_id == "default"))
+    messages = session.exec(
+        select(ChatMessage).where(ChatMessage.user_id == "default")
+    ).all()
+    for msg in messages:
+        session.delete(msg)
     session.commit()
 
 
