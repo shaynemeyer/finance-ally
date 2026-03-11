@@ -1,0 +1,32 @@
+services:
+  app:
+    image: finance-ally
+    environment:
+      LLM_MOCK: "true"
+    tmpfs:
+      - /app/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.50.0-jammy
+    depends_on:
+      app:
+        condition: service_healthy
+    working_dir: /tests
+    volumes:
+      - .:/tests
+    environment:
+      BASE_URL: "http://app:8000"
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+    command: sh -c "npm install && npx playwright test --reporter=list"
