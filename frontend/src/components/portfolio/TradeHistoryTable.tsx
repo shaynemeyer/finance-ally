@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { usePortfolioStore } from "@/store/portfolioStore";
 
-export function TradeHistoryTable() {
+interface Props {
+  selectedYear: number | undefined;
+  onYearChange: (year: number | undefined) => void;
+}
+
+export function TradeHistoryTable({ selectedYear, onYearChange }: Props) {
   const trades = usePortfolioStore((s) => s.trades);
-  const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
 
   const years = [...new Set(trades.map((t) => new Date(t.executed_at).getFullYear()))].sort(
     (a, b) => b - a
@@ -32,7 +35,7 @@ export function TradeHistoryTable() {
           <select
             value={selectedYear ?? ""}
             onChange={(e) =>
-              setSelectedYear(e.target.value ? Number(e.target.value) : undefined)
+              onYearChange(e.target.value ? Number(e.target.value) : undefined)
             }
             className="text-xs bg-background border border-border rounded px-1.5 py-0.5 text-foreground"
           >

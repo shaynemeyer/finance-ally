@@ -5,8 +5,7 @@ import { usePriceStream } from "@/hooks/usePriceStream";
 import { usePortfolioStore } from "@/store/portfolioStore";
 import { WatchlistPanel } from "@/components/watchlist/WatchlistPanel";
 import { ConnectionStatus } from "@/components/header/ConnectionStatus";
-import { PositionsTable } from "@/components/portfolio/PositionsTable";
-import { TradeHistoryTable } from "@/components/portfolio/TradeHistoryTable";
+import { PositionsTabs } from "@/components/portfolio/PositionsTabs";
 import { PortfolioHeatmap } from "@/components/portfolio/PortfolioHeatmap";
 import { PLChart } from "@/components/portfolio/PLChart";
 import { TradeBar } from "@/components/trading/TradeBar";
@@ -15,9 +14,9 @@ import { MainChart } from "@/components/chart/MainChart";
 
 function AppShell() {
   usePriceStream();
-  const { portfolio, fetchPortfolio, fetchHistory, fetchTrades, aggregateRealizedPnl } =
+  const { portfolio, fetchPortfolio, fetchHistory, fetchTrades, trades, aggregateRealizedPnl } =
     usePortfolioStore();
-  const [activeTab, setActiveTab] = useState<"positions" | "trades">("positions");
+  const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     fetchPortfolio();
@@ -32,7 +31,12 @@ function AppShell() {
 
   const totalValue = portfolio?.total_value ?? 0;
   const cashBalance = portfolio?.cash_balance ?? 0;
-  const realizedPnlColor = aggregateRealizedPnl >= 0 ? "text-green-400" : "text-red-400";
+  const displayedAggregate = selectedYear == null
+    ? aggregateRealizedPnl
+    : trades
+        .filter((t) => new Date(t.executed_at).getFullYear() === selectedYear)
+        .reduce((sum, t) => sum + (t.realized_pnl ?? 0), 0);
+  const realizedPnlColor = displayedAggregate >= 0 ? "text-green-400" : "text-red-400";
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -55,8 +59,8 @@ function AppShell() {
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-muted-foreground">Realized P&L</span>
             <span className={`font-mono text-sm tabular-nums ${realizedPnlColor}`}>
-              {aggregateRealizedPnl >= 0 ? "+$" : "-$"}
-              {Math.abs(aggregateRealizedPnl).toLocaleString("en-US", {
+              {displayedAggregate >= 0 ? "+$" : "-$"}
+              {Math.abs(displayedAggregate).toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -116,33 +120,7 @@ function AppShell() {
           </div>
 
           {/* Positions / Trade History tabs */}
-          <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-            <div className="flex border-b border-border shrink-0">
-              <button
-                onClick={() => setActiveTab("positions")}
-                className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wider ${
-                  activeTab === "positions"
-                    ? "text-foreground border-b-2 border-accent"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Positions
-              </button>
-              <button
-                onClick={() => setActiveTab("trades")}
-                className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wider ${
-                  activeTab === "trades"
-                    ? "text-foreground border-b-2 border-accent"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Trade History
-              </button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              {activeTab === "positions" ? <PositionsTable /> : <TradeHistoryTable />}
-            </div>
-          </div>
+          <PositionsTabs selectedYear={selectedYear} onYearChange={setSelectedYear} />
         </div>
 
         {/* AI Chat sidebar */}
