@@ -1,5 +1,6 @@
 """Auto-execution of trades and watchlist changes from LLM structured response."""
 from datetime import datetime, timezone
+from typing import Optional
 
 from sqlmodel import Session, select
 
@@ -31,6 +32,8 @@ def execute_trade(session: Session, provider, ticker: str, side: str, quantity: 
     if not user:
         return {"ok": False, "ticker": ticker, "error": "User profile not found"}
 
+    realized_pnl: Optional[float] = None
+
     if side == "buy":
         if user.cash_balance < total_cost:
             return {"ok": False, "ticker": ticker, "error": "Insufficient cash"}
@@ -54,13 +57,14 @@ def execute_trade(session: Session, provider, ticker: str, side: str, quantity: 
         if not position or position.quantity < quantity:
             return {"ok": False, "ticker": ticker, "error": "Insufficient shares"}
 
+        realized_pnl = (price - position.avg_cost) * quantity
         position.quantity -= quantity
         position.updated_at = _now()
         if position.quantity <= 1e-6:
             session.delete(position)
         user.cash_balance += total_cost
 
-    session.add(Trade(user_id="default", ticker=ticker, side=side, quantity=quantity, price=price))
+    session.add(Trade(user_id="default", ticker=ticker, side=side, quantity=quantity, price=price, realized_pnl=realized_pnl))
     session.commit()
     return {"ok": True, "ticker": ticker, "side": side, "quantity": quantity, "price": price}
 

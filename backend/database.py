@@ -15,6 +15,17 @@ def init_db() -> None:
     from models.seed import seed_data
 
     SQLModel.metadata.create_all(engine)
+
+    # Migrate: add realized_pnl column if it doesn't exist (existing databases)
+    from sqlalchemy.exc import OperationalError
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE trades ADD COLUMN realized_pnl REAL"))
+            conn.commit()
+        except OperationalError as e:
+            if "duplicate column name" not in str(e):
+                raise
+
     with Session(engine) as session:
         seed_data(session)
 

@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
@@ -84,6 +85,8 @@ def execute_trade(
     if not user:
         raise HTTPException(status_code=500, detail="User profile not found")
 
+    realized_pnl: Optional[float] = None
+
     if side == "buy":
         if user.cash_balance < total_cost:
             raise HTTPException(status_code=400, detail="Insufficient cash")
@@ -120,6 +123,7 @@ def execute_trade(
         if not position or position.quantity < body.quantity:
             raise HTTPException(status_code=400, detail="Insufficient shares")
 
+        realized_pnl = (price - position.avg_cost) * body.quantity
         position.quantity -= body.quantity
         position.updated_at = _now()
         if position.quantity <= 1e-6:
@@ -133,6 +137,7 @@ def execute_trade(
             side=side,
             quantity=body.quantity,
             price=price,
+            realized_pnl=realized_pnl,
         )
     )
     session.commit()
@@ -157,3 +162,43 @@ def get_portfolio_history(session: Session = Depends(get_session)):
         {"total_value": s.total_value, "recorded_at": s.recorded_at}
         for s in snapshots
     ]
+
+
+@router.get("/api/portfolio/trades")
+def get_trades(
+    year: Optional[int] = Query(default=None),
+    session: Session = Depends(get_session),
+):
+    """Return trade history with per-trade realized P&L and an aggregate total.
+
+    Pass ?year=2025 to filter by tax year (based on executed_at timestamp).
+    """
+    trades = session.exec(
+        select(Trade)
+        .where(Trade.user_id == "default")
+        .order_by(Trade.executed_at.desc())
+    ).all()
+
+    if year is not None:
+        year_str = str(year)
+        trades = [t for t in trades if t.executed_at[:4] == year_str]
+
+    aggregate_realized_pnl = sum(
+        t.realized_pnl for t in trades if t.realized_pnl is not None
+    )
+
+    return {
+        "trades": [
+            {
+                "id": t.id,
+                "ticker": t.ticker,
+                "side": t.side,
+                "quantity": t.quantity,
+                "price": t.price,
+                "realized_pnl": t.realized_pnl,
+                "executed_at": t.executed_at,
+            }
+            for t in trades
+        ],
+        "aggregate_realized_pnl": aggregate_realized_pnl,
+    }

@@ -1,4 +1,5 @@
 import uuid
+from typing import Optional
 from sqlmodel import SQLModel, Field
 from datetime import datetime, timezone
 
@@ -20,4 +21,5 @@ class Trade(SQLModel, table=True):
     side: str  # "buy" or "sell"
     quantity: float
     price: float
+    realized_pnl: Optional[float] = Field(default=None)  # set on sell trades
     executed_at: str = Field(default_factory=_now)

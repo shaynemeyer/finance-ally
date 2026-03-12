@@ -11,7 +11,7 @@ export function TradeBar() {
   const [error, setError] = useState("");
   const [lastTrade, setLastTrade] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { fetchPortfolio, fetchHistory } = usePortfolioStore();
+  const { fetchPortfolio, fetchHistory, fetchTrades } = usePortfolioStore();
 
   const executeTrade = async (side: "buy" | "sell") => {
     const t = ticker.trim().toUpperCase();
@@ -37,7 +37,7 @@ export function TradeBar() {
         setLastTrade(`${side === "buy" ? "Bought" : "Sold"} ${qty} ${t} @ $${data.price.toFixed(2)} = $${total}`);
         setTicker("");
         setQuantity("");
-        await Promise.all([fetchPortfolio(), fetchHistory()]);
+        await Promise.all([fetchPortfolio(), fetchHistory(), fetchTrades()]);
       } else {
         const body = await res.json().catch(() => ({}));
         setError(body.detail ?? "Trade failed");

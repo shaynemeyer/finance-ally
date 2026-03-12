@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePriceStream } from "@/hooks/usePriceStream";
 import { usePortfolioStore } from "@/store/portfolioStore";
 import { WatchlistPanel } from "@/components/watchlist/WatchlistPanel";
 import { ConnectionStatus } from "@/components/header/ConnectionStatus";
-import { PositionsTable } from "@/components/portfolio/PositionsTable";
+import { PositionsTabs } from "@/components/portfolio/PositionsTabs";
 import { PortfolioHeatmap } from "@/components/portfolio/PortfolioHeatmap";
 import { PLChart } from "@/components/portfolio/PLChart";
 import { TradeBar } from "@/components/trading/TradeBar";
@@ -14,20 +14,29 @@ import { MainChart } from "@/components/chart/MainChart";
 
 function AppShell() {
   usePriceStream();
-  const { portfolio, fetchPortfolio, fetchHistory } = usePortfolioStore();
+  const { portfolio, fetchPortfolio, fetchHistory, fetchTrades, trades, aggregateRealizedPnl } =
+    usePortfolioStore();
+  const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     fetchPortfolio();
     fetchHistory();
+    fetchTrades();
     const interval = setInterval(() => {
       fetchPortfolio();
       fetchHistory();
     }, 10_000);
     return () => clearInterval(interval);
-  }, [fetchPortfolio, fetchHistory]);
+  }, [fetchPortfolio, fetchHistory, fetchTrades]);
 
   const totalValue = portfolio?.total_value ?? 0;
   const cashBalance = portfolio?.cash_balance ?? 0;
+  const displayedAggregate = selectedYear == null
+    ? aggregateRealizedPnl
+    : trades
+        .filter((t) => new Date(t.executed_at).getFullYear() === selectedYear)
+        .reduce((sum, t) => sum + (t.realized_pnl ?? 0), 0);
+  const realizedPnlColor = displayedAggregate >= 0 ? "text-green-400" : "text-red-400";
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -45,6 +54,16 @@ function AppShell() {
             <span className="text-xs text-muted-foreground">Cash</span>
             <span className="font-mono text-sm tabular-nums text-foreground">
               ${cashBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">Realized P&L</span>
+            <span className={`font-mono text-sm tabular-nums ${realizedPnlColor}`}>
+              {displayedAggregate >= 0 ? "+$" : "-$"}
+              {Math.abs(displayedAggregate).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </span>
           </div>
           <ConnectionStatus />
@@ -100,15 +119,8 @@ function AppShell() {
             </div>
           </div>
 
-          {/* Positions table */}
-          <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-            <div className="px-3 py-1.5 border-b border-border shrink-0">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Positions</span>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <PositionsTable />
-            </div>
-          </div>
+          {/* Positions / Trade History tabs */}
+          <PositionsTabs selectedYear={selectedYear} onYearChange={setSelectedYear} />
         </div>
 
         {/* AI Chat sidebar */}
