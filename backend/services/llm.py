@@ -1,13 +1,14 @@
 """OpenRouter LLM client with structured JSON output."""
+
 import json
 from dataclasses import dataclass, field
 
 import httpx
 
-from config import LLM_MOCK, OPENROUTER_API_KEY
+from config import LLM_MOCK, OPENROUTER_API_KEY, OPENROUTER_MODEL
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = "openai/gpt-4o-mini"
+MODEL = OPENROUTER_MODEL
 
 _RESPONSE_SCHEMA = {
     "type": "object",
